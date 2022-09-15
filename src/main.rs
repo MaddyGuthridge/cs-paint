@@ -3,13 +3,20 @@ use std::io::{stdout, Write};
 
 type Coordinate = (i32, i32);
 
+struct Dimensions {
+    width: u32,
+    height: u32,
+}
+
 // TODO: Color constants
 
 /**
  * Create bitmap
  */
-fn create(width: i32, height: i32) -> Image {
+fn create(dimensions: Dimensions) -> Image {
 
+    let image = Image::new(dimensions.width, dimensions.height);
+    image
 }
 
 /**
@@ -18,19 +25,48 @@ fn create(width: i32, height: i32) -> Image {
 fn load(path: &str) -> Image {
 
     let image = open(path);
-    match image {
+    let image = match image {
         Ok(image) => image,
         Err(e) => {
             println!("{:?}", e);
             std::process::exit(1);
-        }
-    }
+        },
+    };
 
     image
 
 }
 
+/**
+ * Obtain user input
+ */
+fn query_user(questions: Vec<&String>) -> Vec<String> {
+
+    let responses = Vec::new();
+
+    for question in questions.iter() {
+        print!("{}", &question[..]);
+        stdout().flush().unwrap();
+
+        let mut response = String::new();
+        std::io::stdin().read_line(&mut response).unwrap();
+
+        responses.push(response);
+    }
+
+    responses
+}
+
 fn save(img: Image, path: &str) {
+
+    let status = img.save(path);
+    match status {
+        Ok(_) => println!("File save successfully"),
+        Err(e) => {
+            println!("{:?}", e);
+            std::process::exit(1);
+        }
+    }
 
 }
 
@@ -48,33 +84,41 @@ fn save(img: Image, path: &str) {
  * Set colour of pixel
  */
 fn draw_pixel(img: Image, coord: Coordinate) -> Image {
-
+    img
 }
 
 /**
  * Draw line (vertical, horizontal, diagonal)
  */
 fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
-
+    img
 }
 
 /**
  * Draw rectangle
  */
 fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
-
+    img
 }
 
 /**
  * Draw ellipse
  */
 fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: bool) -> Image {
-
-}
+    img
+}  
 
 
 fn main() {
     let path = std::env::args().nth(1).expect("You must provide a path.");
+
+    // TODO: make configurable
+    let image_dimensions = Dimensions {
+        width: 256,
+        height: 256,
+    };
+
+    let image = create(image_dimensions);
 
     print!("Which operation? ");
     // We use "flush" so that we see the question before the answer.
@@ -84,7 +128,7 @@ fn main() {
     std::io::stdin().read_line(&mut op).unwrap();
 
     match op.as_str() {
-        "pixel\n" => draw_pixel(path.as_str()),
+        "pixel\n" => draw_pixel(image),
         _ =>  {
             eprintln!("The operation {op} was not recognised!");
         },
