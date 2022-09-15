@@ -3,9 +3,9 @@
 
 * Each function has a bitmap param
 
-* Set pixel ((x, y), color)
+* Set pixel ((x, y), color) DONE
 
-* Draw line
+* Draw line DONE
     * Horizontal ()
     * Vertical
     * Diagonal
