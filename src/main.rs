@@ -13,7 +13,11 @@ fn create(width: i32, height: i32) -> Image {
 /**
  * Load from file
  */
-fn load(path: &str) {
+fn load(path: &str) -> Image {
+
+}
+
+fn save(img: Image, path: &str) {
 
 }
 
