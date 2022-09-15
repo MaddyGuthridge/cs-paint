@@ -44,7 +44,6 @@ fn draw_pixel(img: Image, coord: Coordinate) -> Image {
  * Draw line (vertical, horizontal, diagonal)
  */
 fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
-
 }
 
 /**
