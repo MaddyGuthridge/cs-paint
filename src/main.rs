@@ -1,7 +1,7 @@
-use bmp::{self, Image, open};
+use bmp::{self, Image, Pixel, open};
 use std::io::{stdout, Write};
 
-type Coordinate = (i32, i32);
+type Coordinate = (u32, u32);
 
 struct Dimensions {
     width: u32,
@@ -83,24 +83,25 @@ fn save(img: Image, path: &str) {
 /**
  * Set colour of pixel
  */
-fn draw_pixel(img: Image, coord: Coordinate) -> Image {
+fn draw_pixel(mut img: Image, coord: Coordinate, color: Pixel) -> Image {
+    img.set_pixel(coord.0, coord.1, color);
     img
 }
 
 /**
  * Draw line (vertical, horizontal, diagonal)
  */
-fn draw_line(mut img: Image, start: Coordinate, end: Coordinate) -> Image {
-    fn get_y(start: Coordinate, end: Coordinate, x: i32) -> i32 {
+fn draw_line(mut img: Image, start: Coordinate, end: Coordinate, color: Pixel) -> Image {
+    fn get_y(start: Coordinate, end: Coordinate, x: u32) -> u32 {
         f64::round(
             (end.1 - start.1) as f64
             / (end.0 - start.0) as f64
             * (x - start.0) as f64
             + start.1 as f64
-        ) as i32
+        ) as u32
     }
     for x in start.0..=end.0 {
-        img = draw_pixel(img, (x, get_y(start, end, x)));
+        img = draw_pixel(img, (x, get_y(start, end, x)), color);
     }
     img
 }
