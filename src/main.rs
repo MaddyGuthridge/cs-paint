@@ -145,4 +145,6 @@ fn main() {
     //         eprintln!("The operation {op} was not recognised!");
     //     },
     // }
+
+    save(image, path);
 }
