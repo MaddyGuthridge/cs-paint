@@ -90,7 +90,18 @@ fn draw_pixel(img: Image, coord: Coordinate) -> Image {
 /**
  * Draw line (vertical, horizontal, diagonal)
  */
-fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
+fn draw_line(mut img: Image, start: Coordinate, end: Coordinate) -> Image {
+    fn get_y(start: Coordinate, end: Coordinate, x: i32) -> i32 {
+        f64::round(
+            (end.1 - start.1) as f64
+            / (end.0 - start.0) as f64
+            * (x - start.0) as f64
+            + start.1 as f64
+        ) as i32
+    }
+    for x in start.0..=end.0 {
+        img = draw_pixel(img, (x, get_y(start, end, x)));
+    }
     img
 }
 
@@ -127,11 +138,10 @@ fn main() {
     let mut op = String::new();
     std::io::stdin().read_line(&mut op).unwrap();
 
-    match op.as_str() {
-        "pixel\n" => draw_pixel(image),
-        _ =>  {
-            eprintln!("The operation {op} was not recognised!");
-        },
-    }
-
+    // match op.as_str() {
+    //     "pixel\n" => draw_pixel(path.as_str()),
+    //     _ =>  {
+    //         eprintln!("The operation {op} was not recognised!");
+    //     },
+    // }
 }
