@@ -46,6 +46,13 @@ fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
 }
 
 /**
+ * Draw rectangle
+ */
+fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
+
+}
+
+/**
  * Draw ellipse
  */
 fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: bool) -> Image {
