@@ -4,7 +4,17 @@ use std::io::{stdout, Write};
 type Coordinate = (i32, i32);
 
 // TODO: Color constants
-
+const YELLOW: (u32, u32, u32) = (255,255,0);
+const RED: (u32,u32,u32) = (255,0,0);
+const BLUE: (u32,u32,u32) = (0,0,255);
+const WHITE: (u32,u32,u32) = (255,255,255);
+const GREEN: (u32,u32,u32) = (0,255,0);
+const ORANGE: (u32,u32,u32) = (255,165,0);
+const PURPLE: (u32,u32,u32) = (255,0,255);
+const IND_RED: (u32, u32,u32) = (204,0,0);
+const FIN_BLUE: (u32,u32,u32) = (0,47,108);
+const ICE_BLUE: (u32,u32,u32) = (2,82,156);
+const ICE_RED: (u32,u32,u32) = (220,30,53);
 /**
  * Create bitmap
  */
@@ -55,10 +65,22 @@ fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
 }
 
 /**
- * Draw ellipse
+ * Draw circle
  */
-fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: bool) -> Image {
+fn draw_circle(mut img: Image, centre: Coordinate, r: i32) -> Image {
 
+    centre_x = centre.0;
+    centre_y = centre.1;
+    diameter = r * 2;
+    for x in 0..=diameter {
+        for y in 0..=diameter {
+            if (centre_x - x).pow(2) + (centre_y - y).pow(2) <= r.pow(2) {
+                img = draw_pixel(img, (x, y), (255, 255, 0));
+            }
+        }
+    }
+
+    return img;
 }
 
 
