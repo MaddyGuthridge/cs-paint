@@ -1,4 +1,4 @@
-use bmp::{self, Image};
+use bmp::{self, Image, open};
 use std::io::{stdout, Write};
 
 type Coordinate = (i32, i32);
@@ -16,6 +16,17 @@ fn create(width: i32, height: i32) -> Image {
  * Load from file
  */
 fn load(path: &str) -> Image {
+
+    let image = open(path);
+    match image {
+        Ok(image) => image,
+        Err(e) => {
+            println!("{:?}", e);
+            std::process::exit(1);
+        }
+    }
+
+    image
 
 }
 
