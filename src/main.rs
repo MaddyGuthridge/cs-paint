@@ -8,15 +8,15 @@ type Coordinate = (i32, i32);
 /**
  * Create bitmap
  */
-fn create(width: i32, height: i32) -> Image {
-
+fn create(width: u32, height: u32) -> Image {
+    Image::new(width, height)
 }
 
 /**
  * Load from file
  */
 fn load(path: &str) -> Image {
-
+    Image::new(69, 420)
 }
 
 fn save(img: Image, path: &str) {
@@ -37,18 +37,23 @@ fn save(img: Image, path: &str) {
  * Set colour of pixel
  */
 fn draw_pixel(img: Image, coord: Coordinate) -> Image {
-
+    img
 }
 
 /**
  * Draw line (vertical, horizontal, diagonal)
  */
-fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
+fn draw_line(mut img: Image, start: Coordinate, end: Coordinate) -> Image {
     fn get_y(start: Coordinate, end: Coordinate, x: i32) -> i32 {
-        (end.1 - start.1) as f64 / (end.0 - start.0) * (x - start.0) + start.1
+        f64::round(
+            (end.1 - start.1) as f64
+            / (end.0 - start.0) as f64
+            * (x - start.0) as f64
+            + start.1 as f64
+        ) as i32
     }
     for x in start.0..=end.0 {
-        draw_pixel(img, (x, get_y(start, end, x)));
+        img = draw_pixel(img, (x, get_y(start, end, x)));
     }
     img
 }
@@ -57,14 +62,14 @@ fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
  * Draw rectangle
  */
 fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
-
+    img
 }
 
 /**
  * Draw ellipse
  */
 fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: bool) -> Image {
-
+    img
 }
 
 
@@ -78,11 +83,10 @@ fn main() {
     let mut op = String::new();
     std::io::stdin().read_line(&mut op).unwrap();
 
-    match op.as_str() {
-        "pixel\n" => draw_pixel(path.as_str()),
-        _ =>  {
-            eprintln!("The operation {op} was not recognised!");
-        },
-    }
-
+    // match op.as_str() {
+    //     "pixel\n" => draw_pixel(path.as_str()),
+    //     _ =>  {
+    //         eprintln!("The operation {op} was not recognised!");
+    //     },
+    // }
 }
