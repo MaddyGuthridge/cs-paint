@@ -44,7 +44,13 @@ fn draw_pixel(img: Image, coord: Coordinate) -> Image {
  * Draw line (vertical, horizontal, diagonal)
  */
 fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
-
+    fn get_y(start: Coordinate, end: Coordinate, x: i32) -> i32 {
+        (end.1 - start.1) / (end.0 - start.0) * (x - start.0) + start.1
+    }
+    for x in start.0..=end.0 {
+        draw_pixel(img, (x, get_y(start, end, x)));
+    }
+    img
 }
 
 /**
