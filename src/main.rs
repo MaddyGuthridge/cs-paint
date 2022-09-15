@@ -3,6 +3,8 @@ use std::io::{stdout, Write};
 
 type Coordinate = (i32, i32);
 
+// TODO: Color constants
+
 /**
  * Create bitmap
  */
@@ -42,6 +44,13 @@ fn draw_pixel(img: Image, coord: Coordinate) -> Image {
  * Draw line (vertical, horizontal, diagonal)
  */
 fn draw_line(img: Image, start: Coordinate, end: Coordinate) -> Image {
+
+}
+
+/**
+ * Draw rectangle
+ */
+fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
 
 }
 
