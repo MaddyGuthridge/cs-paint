@@ -3,6 +3,8 @@ use std::io::{stdout, Write};
 
 type Coordinate = (i32, i32);
 
+// TODO: Color constants
+
 /**
  * Create bitmap
  */
