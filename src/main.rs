@@ -1,8 +1,14 @@
 use bmp::{self, Image, Pixel, open};
-use std::{io::{stdout, Write, self}, process::exit};
+use std::{io::{Write, self}, process::exit};
 
-type Coordinate = (u32, u32);
+// type Coordinate = (u32, u32);
+#[derive(Copy, Clone)]
+struct Coordinate {
+    x: u32,
+    y: u32,
+}
 
+#[derive(Copy, Clone)]
 struct Dimensions {
     width: u32,
     height: u32,
@@ -23,7 +29,6 @@ fn create(dimensions: Dimensions) -> Image {
  * Load from file
  */
 fn load(path: &str) -> Image {
-
     let image = open(path);
     let image = match image {
         Ok(image) => image,
@@ -32,33 +37,10 @@ fn load(path: &str) -> Image {
             std::process::exit(1);
         },
     };
-
     image
-
 }
 
-/**
- * Obtain user input
- */
-fn query_user(questions: Vec<&String>) -> Vec<String> {
-
-    let mut responses = Vec::new();
-
-    for question in questions.iter() {
-        print!("{}", &question[..]);
-        stdout().flush().unwrap();
-
-        let mut response = String::new();
-        std::io::stdin().read_line(&mut response).unwrap();
-
-        responses.push(response);
-    }
-
-    responses
-}
-
-fn save(img: Image, path: &str) {
-
+fn save(img: Image, path: &str) -> Image {
     let status = img.save(path);
     match status {
         Ok(_) => println!("File save successfully"),
@@ -67,24 +49,14 @@ fn save(img: Image, path: &str) {
             std::process::exit(1);
         }
     }
-
+    img
 }
-
-// fn draw_pixel(path: &str) {
-//     let mut image = match bmp::open(path) {
-//         Ok(i) => i,
-//         Err(_) => bmp::Image::new(100, 100)
-//     };
-//     image.set_pixel(50, 50, bmp::Pixel::new(255, 255, 255));
-//
-//     image.save(path).expect("This should save correctly.");
-// }
 
 /**
  * Set colour of pixel
  */
-fn draw_pixel(mut img: Image, coord: Coordinate, color: Pixel) -> Image {
-    img.set_pixel(coord.0, coord.1, color);
+fn draw_pixel(mut img: Image, coord: Coordinate, colour: Pixel) -> Image {
+    img.set_pixel(coord.x, coord.y, colour);
     img
 }
 
@@ -94,17 +66,17 @@ fn draw_pixel(mut img: Image, coord: Coordinate, color: Pixel) -> Image {
 fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: Pixel) -> Image {
     fn get_y(start: Coordinate, end: Coordinate, x: u32) -> u32 {
         f64::round(
-            (end.1 as i32 - start.1 as i32) as f64
-            / (end.0 - start.0) as f64
-            * (x - start.0) as f64
-            + start.1 as f64
+            (end.y as i32 - start.y as i32) as f64
+            / (end.x - start.x) as f64
+            * (x - start.x) as f64
+            + start.y as f64
         ) as u32
     }
-    if start.0 < end.0 {
+    if start.x > end.x {
         (end, start) = (start, end);
     }
-    for x in start.0..=end.0 {
-        img = draw_pixel(img, (x, get_y(start, end, x)), color);
+    for x in start.x..=end.x {
+        img = draw_pixel(img, Coordinate { x, y: get_y(start, end, x) }, color);
     }
     img
 }
@@ -112,7 +84,15 @@ fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: 
 /**
  * Draw rectangle
  */
-fn draw_rect(img: Image, top_left: Coordinate, top_right: Coordinate) -> Image {
+fn draw_rect(mut img: Image, mut top_left: Coordinate, mut top_right: Coordinate, color: Pixel) -> Image {
+    // Make it always go from top-to-bottom
+    // draw_line will handle the left-to-right for us
+    if top_left.y > top_right.y {
+        (top_right, top_left) = (top_left, top_right);
+    }
+    for y in top_left.y..=top_right.y {
+        img = draw_line(img, Coordinate { x: top_left.x, y }, Coordinate { x: top_right.x, y: y }, color);
+    }
     img
 }
 
@@ -123,12 +103,17 @@ fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: 
     img
 }
 
+fn print_colour(colour: &Pixel) {
+    println!("Colour == {}, {}, {}", colour.r, colour.g, colour.b);
+}
+
 
 fn prompt(prompt_str: String) -> String {
     if prompt_str != "" {
         println!("{prompt_str}");
     }
     print!(">>> ");
+    io::stdout().flush().unwrap();
     let mut response = String::new();
     io::stdin().read_line(&mut response).unwrap();
     response.trim().to_string()
@@ -145,7 +130,17 @@ fn prompt_coord() -> Coordinate {
     let x = prom_num();
     println!("Y");
     let y = prom_num();
-    (x, y)
+    Coordinate { x, y }
+}
+
+fn prompt_colour() -> Pixel {
+    println!("Red");
+    let r = prom_num() as u8;
+    println!("Green");
+    let g = prom_num() as u8;
+    println!("Blue");
+    let b = prom_num() as u8;
+    Pixel { r, g, b }
 }
 
 
@@ -155,8 +150,8 @@ fn prompt_main() -> Image {
     println!("===================");
     println!("o => open file");
     println!("n => new file");
+    println!("x => exit");
     println!("===================");
-    print!(">>> ");
 
     let choice = prompt(String::new());
     match choice.as_str() {
@@ -166,50 +161,72 @@ fn prompt_main() -> Image {
         }
         "n" => {
             let dims = prompt_coord();
-            return create(Dimensions { width: dims.0, height: dims.1 });
+            return create(Dimensions { width: dims.x, height: dims.y });
+        }
+        "x" => {
+            exit(0);
         }
         &_ => {
-            println!("Invalid option :(");
-            panic!();
+            println!("Invalid option, try again");
+            // Recurse until the give a valid one
+            prompt_main()
         }
     }
 }
 
 
-fn prompt_edit(mut img: Image) -> Image {
+fn prompt_edit(mut img: Image, mut colour: Pixel) -> (Image, Pixel) {
+    print_colour(&colour);
+    println!("========================");
+    println!("c => choose colour");
     println!("p => set pixel");
     println!("l => draw line");
+    println!("r => draw rectangle");
     println!("s => save");
+    println!("x => exit without saving");
 
     let choice = prompt(String::new());
     match choice.as_str() {
+        "c" => {
+            colour = prompt_colour();
+        }
         "p" => {
             let coord = prompt_coord();
-            return draw_pixel(img, coord, Pixel::new(255, 255, 255));
+            img = draw_pixel(img, coord, colour);
         }
         "l" => {
             println!("Start point");
             let start = prompt_coord();
             println!("End point");
             let end = prompt_coord();
-            return draw_line(img, start, end, Pixel::new(255, 255, 255));
+            img = draw_line(img, start, end, colour);
+        }
+        "r" => {
+            println!("Start point");
+            let start = prompt_coord();
+            println!("End point");
+            let end = prompt_coord();
+            img = draw_rect(img, start, end, colour);
         }
         "s" => {
             let filename = prompt("Filename".to_string());
-            save(img, &filename.to_string());
+            img = save(img, &filename.to_string());
+        }
+        "x" => {
             exit(0);
         }
         &_ => {
             println!("Invalid option :(");
-            panic!();
         }
     }
+    (img, colour)
 }
 
 
 fn main() {
+    let mut colour = Pixel::new(255, 255, 255);
     let mut img = prompt_main();
     loop {
-        img = prompt_edit(img);
+        (img, colour) = prompt_edit(img, colour);
     }
 }
