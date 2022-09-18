@@ -68,6 +68,7 @@ fn draw_pixel(mut img: Image, coord: Coordinate, colour: Pixel) -> Image {
  * Draw line (vertical, horizontal, diagonal)
  */
 fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: Pixel) -> Image {
+    // TODO: Fix this to handle high gradients cleanly
     fn get_y(start: Coordinate, end: Coordinate, x: u32) -> u32 {
         f64::round(
             (end.y as i32 - start.y as i32) as f64
@@ -104,7 +105,7 @@ fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: 
 /**
  * Draw rectangle
  */
-fn draw_rect(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: Pixel, filled: Filled) -> Image {
+fn draw_rectangle(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: Pixel, filled: Filled) -> Image {
     // Make it always go from top-to-bottom
     // draw_line will handle the left-to-right for us
     if start.y > end.y {
@@ -121,16 +122,15 @@ fn draw_rect(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: 
             img = draw_line(img, Coordinate { x: start.x, y }, Coordinate { x: end.x, y }, color);
         },
     }
-
     img
 }
 
-/**
- * Draw ellipse
- */
-fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: Filled) -> Image {
-    img
-}
+// /**
+//  * Draw ellipse
+//  */
+// fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: Filled) -> Image {
+//     img
+// }
 
 fn print_colour(colour: &Pixel) {
     println!("Colour == {}, {}, {}", colour.r, colour.g, colour.b);
@@ -268,7 +268,7 @@ fn prompt_edit(mut img: Image, mut colour: Pixel, mut filename: String, mut fill
             let start = prompt_coord();
             println!("End point");
             let end = prompt_coord();
-            img = draw_rect(img, start, end, colour, filled);
+            img = draw_rectangle(img, start, end, colour, filled);
         }
         "s" => {
             (img, filename )= prompt_save(img, filename);
