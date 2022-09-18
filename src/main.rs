@@ -14,7 +14,11 @@ struct Dimensions {
     height: u32,
 }
 
-// TODO: Color constants
+#[derive(Copy, Clone)]
+enum Filled {
+    Unfilled,
+    Filled
+}
 
 /**
  * Create bitmap
@@ -76,7 +80,23 @@ fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: 
         (end, start) = (start, end);
     }
     for x in start.x..=end.x {
-        img = draw_pixel(img, Coordinate { x, y: get_y(start, end, x) }, color);
+        // handle special case: vertical lines have no gradient
+        let curr_y = if start.x == end.x {
+            u32::min(start.y, end.y)
+        } else {
+            u32::min(get_y(start, end, x), get_y(start, end, x + 1))
+        };
+        let next_y = if start.x == end.x {
+            u32::max(start.y, end.y)
+        } else {
+            u32::min(
+                u32::max(get_y(start, end, x), get_y(start, end, x + 1)),
+                u32::max(start.y, end.y)
+            )
+        };
+        for y in curr_y..next_y {
+            img = draw_pixel(img, Coordinate { x, y }, color);
+        }
     }
     img
 }
@@ -84,22 +104,31 @@ fn draw_line(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: 
 /**
  * Draw rectangle
  */
-fn draw_rect(mut img: Image, mut top_left: Coordinate, mut top_right: Coordinate, color: Pixel) -> Image {
+fn draw_rect(mut img: Image, mut start: Coordinate, mut end: Coordinate, color: Pixel, filled: Filled) -> Image {
     // Make it always go from top-to-bottom
     // draw_line will handle the left-to-right for us
-    if top_left.y > top_right.y {
-        (top_right, top_left) = (top_left, top_right);
+    if start.y > end.y {
+        (end, start) = (start, end);
     }
-    for y in top_left.y..=top_right.y {
-        img = draw_line(img, Coordinate { x: top_left.x, y }, Coordinate { x: top_right.x, y: y }, color);
+    match filled {
+        Filled::Unfilled => {
+            img = draw_line(img, Coordinate { x: start.x, y: start.y }, Coordinate { x: start.x, y: end.y }, color);
+            img = draw_line(img, Coordinate { x: start.x, y: end.y }, Coordinate { x: end.y, y: end.y }, color);
+            img = draw_line(img, Coordinate { x: end.x, y: end.y }, Coordinate { x: end.x, y: start.y }, color);
+            img = draw_line(img, Coordinate { x: end.x, y: start.y }, Coordinate { x: start.x, y: start.y }, color);
+        },
+        Filled::Filled => for y in start.y..=end.y {
+            img = draw_line(img, Coordinate { x: start.x, y }, Coordinate { x: end.x, y }, color);
+        },
     }
+
     img
 }
 
 /**
  * Draw ellipse
  */
-fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: bool) -> Image {
+fn draw_ellipse(img: Image, centre: Coordinate, r_ver: i32, r_hor: i32, filled: Filled) -> Image {
     img
 }
 
@@ -144,7 +173,18 @@ fn prompt_colour() -> Pixel {
 }
 
 
-fn prompt_main() -> Image {
+fn prompt_filled() -> Filled {
+    println!("f => filled");
+    println!("u => unfilled");
+    match prompt(String::new()).as_str() {
+        "f" => Filled::Filled,
+        "u" => Filled::Unfilled,
+        &_ => prompt_filled()
+    }
+}
+
+
+fn prompt_main() -> (Image, String) {
     println!("Welcome to CS Paint");
     println!("Main menu");
     println!("===================");
@@ -157,11 +197,14 @@ fn prompt_main() -> Image {
     match choice.as_str() {
         "o" => {
             let filename = prompt("Enter filename".to_string());
-            return load(&filename);
+            return (load(&filename), filename);
         }
         "n" => {
             let dims = prompt_coord();
-            return create(Dimensions { width: dims.x, height: dims.y });
+            return (
+                create(Dimensions { width: dims.x, height: dims.y }),
+                String::new()
+            );
         }
         "x" => {
             exit(0);
@@ -175,10 +218,26 @@ fn prompt_main() -> Image {
 }
 
 
-fn prompt_edit(mut img: Image, mut colour: Pixel) -> (Image, Pixel) {
+fn prompt_save(mut img: Image, mut filename: String) -> (Image, String) {
+    if !filename.is_empty() {
+        let new_filename = prompt(format!("Filename (currently {filename})").to_string());
+        if !new_filename.is_empty() {
+            filename = new_filename;
+        }
+    }
+    while filename.is_empty() {
+        filename = prompt(format!("Filename").to_string());
+    }
+    img = save(img, &filename.to_string());
+    (img, filename)
+}
+
+
+fn prompt_edit(mut img: Image, mut colour: Pixel, mut filename: String, mut filled: Filled) -> (Image, Pixel, String, Filled) {
     print_colour(&colour);
     println!("========================");
     println!("c => choose colour");
+    println!("f => set filled/unfilled");
     println!("p => set pixel");
     println!("l => draw line");
     println!("r => draw rectangle");
@@ -189,6 +248,9 @@ fn prompt_edit(mut img: Image, mut colour: Pixel) -> (Image, Pixel) {
     match choice.as_str() {
         "c" => {
             colour = prompt_colour();
+        }
+        "f" => {
+            filled = prompt_filled();
         }
         "p" => {
             let coord = prompt_coord();
@@ -206,11 +268,10 @@ fn prompt_edit(mut img: Image, mut colour: Pixel) -> (Image, Pixel) {
             let start = prompt_coord();
             println!("End point");
             let end = prompt_coord();
-            img = draw_rect(img, start, end, colour);
+            img = draw_rect(img, start, end, colour, filled);
         }
         "s" => {
-            let filename = prompt("Filename".to_string());
-            img = save(img, &filename.to_string());
+            (img, filename )= prompt_save(img, filename);
         }
         "x" => {
             exit(0);
@@ -219,14 +280,16 @@ fn prompt_edit(mut img: Image, mut colour: Pixel) -> (Image, Pixel) {
             println!("Invalid option :(");
         }
     }
-    (img, colour)
+    (img, colour, filename, filled)
 }
 
 
 fn main() {
     let mut colour = Pixel::new(255, 255, 255);
-    let mut img = prompt_main();
+    let mut filled = Filled::Unfilled;
+    let (mut img, mut filename) = prompt_main();
     loop {
-        (img, colour) = prompt_edit(img, colour);
+        (img, colour, filename, filled)
+        = prompt_edit(img, colour, filename, filled);
     }
 }
